@@ -7,14 +7,20 @@ except ImportError:  # Python 3
 
 import os
 import sys
-import yaml
+from ruamel.yaml import YAML
 import platform
 from pkg_resources import resource_string
 
 from feeds import SupplyFeed
 from recipes import Recipe
 from main_screen import MainScreen
+#from led import LED
+#from serial_connection import SerialConnection
 
+import logging
+# *** configure LOGGING here *** (INFO, DEBUG)
+#logging.basicConfig(filename=(os.path.expanduser("~/tikibot.log")), level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S')
+logging.basicConfig(filename=(os.path.expanduser("~/tikibot.log")), level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d_%H:%M:%S')
 
 def float_representer(dumper, value):
     text = '%.3f' % (value)
@@ -22,37 +28,48 @@ def float_representer(dumper, value):
         text = text[:-1]
     return dumper.represent_scalar(u'tag:yaml.org,2002:float', text)
 
-
-yaml.add_representer(float, float_representer)
-
-
+yaml = YAML()
+#yaml.add_representer(float, float_representer)
 class TikiBotGui(Tk):
     def __init__(self):
         super(TikiBotGui, self).__init__()
+        try:
+            import RPi.GPIO as GPIO
+            self.test_environment = False
+        except (ImportError, RuntimeError):
+            self.test_environment = True
         self.passcode = "8888"
-        self.use_metric = False
+        self.use_metric = True
+        self.stepsforml = "113"
+        self.serdevice = "/dev/ttyUSB0"
         self.screen_stack = []
         self.image_cache = {}
-        self.title("TikiBot")
-        if platform.system() == "Linux":
+        self.title("Let-Him-Mix")
+        self.bgcolor = "#94F92F" # bg-color for all frames
+        if self.test_environment == False:
             self.attributes("-fullscreen", True)
             self.protocol("WM_DELETE_WINDOW", lambda: false)
             self.option_add("*cursor", "none")
-            self.option_add("*font", "Helvetica 14")
+            self.option_add("*font", "Helvetica 22")
             self.option_add("*Text*font", "Helvetica 18")
             self.option_add("*Pour*Button*font", "Helvetica 18")
+            self.option_add("*MainScreen*Button*font", "Helvetica 18")
             self.option_add("*TouchSpinner*font", "Helvetica 14")
             self.option_add("*Amount*TouchSpinner*Label*font", "Helvetica 20")
-            self.option_add("*Button*background", "#ccc")
-            self.option_add("*Button*activeBackground", "#ccc")
+            self.option_add("*Button*background", "#FFFC74") # bg-color of buttons
+            self.option_add("*Button*activeBackground", "#F6E70A") # bg-color of active buttons
+            #self.neolight=LED()
+            #self.neolight.start()
         else:
-            self.geometry("800x480")
-            self.option_add("*font", "Helvetica 16")
-            self.option_add("*Text*font", "Helvetica 20")
-            self.option_add("*Pour*Button*font", "Helvetica 20")
-            self.option_add("*Amount*TouchSpinner*Label*font", "Helvetica 24")
-            self.option_add("*Button*background", "#ccc")
-            self.option_add("*Button*activeBackground", "#ccc")
+            self.geometry("1024x600")
+            self.option_add("*font", "Helvetica 22")
+            self.option_add("*Text*font", "Helvetica 18")
+            self.option_add("*Pour*Button*font", "Helvetica 18")
+            self.option_add("*MainScreen*Button*font", "Helvetica 18")
+            self.option_add("*TouchSpinner*font", "Helvetica 14")
+            self.option_add("*Amount*TouchSpinner*Label*font", "Helvetica 20")
+            self.option_add("*Button*background", "#FFFC74")
+            self.option_add("*Button*activeBackground", "#F6E70A")
         self.bind('<Key-Escape>', lambda evt: sys.exit(0))
         self.load_configs()
         self.screen_push(MainScreen(self))
@@ -63,11 +80,14 @@ class TikiBotGui(Tk):
     def load_configs(self):
         try:
             with open(os.path.expanduser("~/.tikibot.yaml"), "r") as f:
-                confs = yaml.safe_load(f)
+                confs = yaml.load(f)
         except FileNotFoundError:
             confs = yaml.load(self.get_resource("tikibot_configs.yaml"))
         self.passcode = confs.get('passcode', '8888')
-        self.use_metric = confs.get('use_metric', False)
+        self.use_metric = confs.get('use_metric', True)
+        self.stepsforml = confs.get('stepsforml', "113")
+        self.serdevice = confs.get('serdevice', '/dev/ttyUSB0')
+        self.bgcolor = confs.get('bgcolor', '#94F92F')
         SupplyFeed.fromDict(confs)
         Recipe.fromDict(confs)
 
@@ -76,12 +96,15 @@ class TikiBotGui(Tk):
             "conf_version": "1.0.0",
             "passcode": self.passcode,
             "use_metric": self.use_metric,
+            "stepsforml": self.stepsforml,
+            "serdevice": self.serdevice,
+            "bgcolor": self.bgcolor,
         }
         confs = SupplyFeed.toDictAll(confs)
         confs = Recipe.toDictAll(confs, metric=self.use_metric)
         with open(os.path.expanduser("~/.tikibot.yaml"), "w") as f:
-            f.write(yaml.dump(confs))
-
+            yaml.dump(confs, f)
+        
     def set_resource(self, name, data):
         with open(os.path.join("resources", name), "w") as f:
             f.write(data)

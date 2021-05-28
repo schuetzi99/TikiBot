@@ -23,7 +23,7 @@ class CalibScreen(Frame):
         self.dutyspin = TouchSpinner(self, width=150, value=100, minval=10, maxval=100, incdecval=5, format="Duty: %d%%")
         self.amntspin = TouchSpinner(self, width=150, value=100, minval=25, maxval=500, incdecval=25, format="Amount: %d ml")
         self.pourbtn = RectButton(self, text="Pour", width=150, command=self.handle_button_pour)
-        self.flowspin = TouchSpinner(self, width=150, value=feed.flowrate, minval=0.1, maxval=50.0, incdecval=0.1, format="Flow: %.1f ml/s", changecmd=self._flowrate_change)
+        self.flowspin = TouchSpinner(self, width=150, value=feed.remaining, minval=0.1, maxval=50.0, incdecval=0.1, format="Flow: %.1f ml/s", changecmd=self._remaining_change)
         self.overspin = TouchSpinner(self, width=150, value=feed.pulse_overage, minval=0.0, maxval=2.0, incdecval=0.01, format="Pulse: %.2f ml", changecmd=self._overage_change)
         self.displbl = Label(self, text="")
         backbtn = RectButton(self, text="\u23ce", width=120, command=self.handle_button_back)
@@ -43,8 +43,8 @@ class CalibScreen(Frame):
         self.rowconfigure(8, weight=1)
         self.rowconfigure(10, minsize=10)
 
-    def _flowrate_change(self, oldval, newval):
-        self.feed.flowrate = newval
+    def _remaining_change(self, oldval, newval):
+        self.feed.remaining = newval
 
     def _overage_change(self, oldval, newval):
         self.feed.pulse_overage = newval
@@ -95,7 +95,7 @@ class CalibScreen(Frame):
             return
         self.start_pid = self.after(1001, self._feed_cycle_start)
         remaining_ml = self.target_ml - self.dispensed
-        remtime = remaining_ml / self.feed.flowrate
+        remtime = remaining_ml / self.feed.remaining
         stop_ms = int(max(0.01,min(remtime, self.duty_cycle))*1000)
         self.stop_pid = self.after(stop_ms, self._feed_cycle_stop, stop_ms)
         if self.duty_cycle < 1.0 or self.dispensed == 0.0:
@@ -103,7 +103,7 @@ class CalibScreen(Frame):
         self.displbl.config(text="Dispensed:\n%.1f ml (%d%%)" % (self.dispensed, int(100*self.dispensed/self.target_ml+0.5)))
 
     def _feed_cycle_stop(self, ms):
-        self.dispensed += self.feed.flowrate * (ms / 1000.0)
+        self.dispensed += self.feed.remaining * (ms / 1000.0)
         self.dispensed += self.feed.pulse_overage
         if self.duty_cycle < 1.0 or self.dispensed >= self.target_ml - 0.05:
             self.feed.stopFeed()
@@ -112,7 +112,7 @@ class CalibScreen(Frame):
     def handle_button_back(self):
         if self.feed.isFlowing():
             self.feed.stopFeed()
-        self.feed.flowrate = self.flowspin.get()
+        self.feed.remaining = self.flowspin.get()
         self.feed.pulse_overage = self.overspin.get()
         self.master.save_configs()
         self.master.screen_pop()

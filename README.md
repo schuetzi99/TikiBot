@@ -1,8 +1,33 @@
-TikiBot
-=======
+Let-Him-Mix
+===========
 Touchscreen BarBot software for auto-dispensing mixed drinks.  Runs under
-Linux on a Raspberry Pi or Udoo, using DC motor controllers over I2C, to
-activate pumps and valves to dispense ingredients.
+Linux on a Raspberry Pi, using 24 stepper motors, controlled over
+an Arduino Mega and 12 Adafruit Motorshield V2, to
+drive peristaltic pumps to dispense ingredients.
+
+To drive our let-him-mix Cocktail bot, we took this software, and changed
+it to our needs. And as this software is licenced under the GPL, we give
+our development back to the community.
+
+The differences to the original are:
+* we are using  peristaltic pumps, driven by stepper motors, so there is
+  no need to mesure the time. We are knowing the needed steps for 1 ml
+* as we don't know, how to manage 24 steppers with one Raspi, we are using
+  Arduino Mega and Adafruit Motorshield for this
+* we do mixing the cocktails with mixer on an elevator
+* we also had to change the gui to manage more ingredients (24) and much more
+  recipies (currentle we have collected 217). No you can scroll down on most
+  screens.
+* we are managing the content left in the bottles, so we know, which bottle
+  will get empty
+* we do generate a Cocktail card
+* empty igredients will not be used any more, and the cocktails which are
+  using the ingredient will not be displayed
+
+We let the rest of the documentaion as is. If you want to work with us on this,
+please tell us.
+
+------------------------------------------------------------------------------
 
 TikiBot Lives!  It was a great success at my friend's Tiki themed party.
 

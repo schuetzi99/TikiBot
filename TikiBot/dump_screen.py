@@ -15,6 +15,8 @@ class DumpScreen(Frame):
         self.backbtn = RectButton(self, text="Stop", command=self.handle_button_back)
         self.lbl.pack(side=TOP, fill=BOTH, expand=1)
         self.backbtn.pack(side=BOTTOM, fill=X, padx=10, pady=10)
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
         for feed in SupplyFeed.getAll():
             feed.startFeed()
 

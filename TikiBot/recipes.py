@@ -1,11 +1,35 @@
 from __future__ import division
-
 import sys
 import math
 import time
 import platform
 import operator
+import os
 from feeds import SupplyFeed
+import time
+import re
+from serial_connection import SerialConnection
+import logging
+import socket
+hostname=socket.gethostname()
+import importlib
+try:
+    hwc = __import__(hostname)
+    hwconfig = hwc.hwconfig
+    print("loading hostspecific config " + hostname)
+except:
+    hwc = __import__("hwconfig")
+    hwconfig = hwc.hwconfig
+    print("no hostspecific config found, loading default hwconfig")
+try:
+    import RPi.GPIO as GPIO
+    test_environment = False
+    from adafruit_servokit import ServoKit
+    print("raspihardware found, modules imported")
+except (ImportError, RuntimeError):
+    test_environment = True
+
+
 
 
 # Unit multipliers to convert to milliliters
@@ -56,9 +80,14 @@ unit_measures = {
 
 
 type_icons = {
-    "Juices": "JuicesIcon.gif",
-    "Tiki Drinks": "TikiDrinkIcon.gif",
-    "Cocktails": "CocktailsIcon.gif",
+    "Alkoholfrei": "AlkoholfreiDrinkIcon.gif",
+    "Cocktails": "CocktailDrinkIcon.gif",
+    "Longdrinks": "LongDrinkIcon.gif",
+    "Fancy Drinks": "FancyDrinkIcon.gif",
+    "Tropical Drinks": "TropicalDrinkIcon.gif",
+    "Coladas": "ColadaDrinkIcon.gif",
+    "Sour": "SourDrinkIcon.gif",
+    "Extra Schuss": "ExtraSchussIcon.gif",
 }
 
 
@@ -83,7 +112,7 @@ class Ingredient(object):
         feed = SupplyFeed.getByName(name)
         return cls(feed, ml)
 
-    def toArray(self, metric=False):
+    def toArray(self, metric=True):
         val, unit = self.getBarUnits(metric=metric)
         return [self.feed.getName(), val, unit]
 
@@ -123,7 +152,8 @@ class Ingredient(object):
         """
         val, unit = self.getBarUnits(partial, metric=metric)
         if metric:
-            return (math.floor(val*10+0.5)/10.0, "", unit)
+            #return (math.floor(val*10+0.5)/10.0, "", unit)
+            return (math.floor(val*10)/10.0, "", unit)
         whole = math.floor(val)
         frac = val - whole
         min_delta = 1
@@ -144,7 +174,7 @@ class Ingredient(object):
             frac = "%d/%d" % (found_numer, found_denom)
         return (whole, frac, unit)
 
-    def readableDesc(self, partial=1.0, metric=False):
+    def readableDesc(self, partial=1.0, metric=True):
         whole, frac, unit = self.fractionalBarUnits(partial=partial, metric=metric)
         valstr = ""
         if whole > 0:
@@ -168,20 +198,23 @@ class Ingredient(object):
 
 
 class DispensingIngredient(Ingredient):
-    def __init__(self, ingr, size_mult, max_time):
-        new_vol = ingr.milliliters * size_mult
+    def __init__(self, ingr, size_mult):
+        new_vol = ingr.milliliters
         super(DispensingIngredient, self).__init__(ingr.feed, new_vol)
         self.dispensed = 0.0
-        self.proportion = (new_vol / ingr.feed.flowrate) / max_time
+        #self.remainingnew = ingr.feed.remaining - new_vol
 
     def done(self):
         return self.dispensed >= self.milliliters
 
     def percentDone(self):
-        return 100.0 * self.dispensed / self.milliliters
+        tempDone = math.ceil(100.0 * self.dispensed / self.milliliters)
+        if tempDone > 100:
+            tempDone = 100
+        return tempDone
 
     def updateDispensed(self, secs):
-        self.dispensed  += self.feed.flowrate * secs
+        self.dispensed  = secs
 
 
 class UnknownRecipeTypeError(Exception):
@@ -193,7 +226,7 @@ class Recipe(object):
     recipe_types = {}
     by_feed = {}
 
-    def __init__(self, type_, name, ingredients=[], icon=None):
+    def __init__(self, type_, name, ingredients, mixit, icon):
         global type_icons
         if type_ not in type_icons:
             raise UnknownRecipeTypeError()
@@ -203,12 +236,14 @@ class Recipe(object):
         self.type_ = type_
         self.name = name
         self.icon = icon
+        self.mixit = mixit
         self.ingredients = []
         self.dispensing = []
         self.timeslice_secs = 1.0
         self.min_dispense_secs = 0.1
         self.last_timeslice = time.time()
         self.last_update_time = time.time()
+        self.stepsforml = 136 # number of steps for 1 ml
         Recipe.recipes[name] = self
         for ingr_data in ingredients:
             ingr = Ingredient.fromArray(ingr_data)
@@ -232,21 +267,23 @@ class Recipe(object):
                 data['type'],
                 name,
                 data['ingredients'],
-                icon=data.get('icon')
+                data['mixit'],
+                icon=data.get('icon'),
             )
 
     @classmethod
-    def toDictAll(cls, d, metric=False):
+    def toDictAll(cls, d, metric=True):
         """Create a dictionary description of all Recipe instances."""
         global type_icons
         d['recipes'] = {name: recipe.toDict(metric=metric) for name, recipe in cls.recipes.items()}
         d['type_icons'] = type_icons
         return d
 
-    def toDict(self, metric=False):
+    def toDict(self, metric=True):
         data = {
             'type': self.type_,
-            'ingredients': [x.toArray(metric=metric) for x in self.ingredients]
+            'ingredients': [x.toArray(metric=metric) for x in self.ingredients],
+            'mixit': self.mixit,
         }
         if self.icon:
             data['icon'] = self.icon
@@ -270,6 +307,13 @@ class Recipe(object):
     def getRecipesByType(cls, name):
         recipe_list = cls.recipe_types[name]
         return sorted(recipe_list, key=operator.attrgetter('name'))
+
+    @classmethod
+    def getRecipesKeysByType(cls, name):
+        recipe_list = cls.recipe_types[name]
+        for key in sorted(cls.recipes.keys()):
+            if cls.getByName(name=key)  in recipe_list:
+                yield cls.recipes[key]
 
     @classmethod
     def getRecipesByFeed(cls, feed):
@@ -296,6 +340,9 @@ class Recipe(object):
 
     def getType(self):
         return self.type_
+
+    def getMixit(self):
+        return self.mixit
 
     def getIcon(self):
         return self.icon
@@ -337,7 +384,7 @@ class Recipe(object):
 
     def canMake(self):
         for ingr in self.ingredients:
-            if not ingr.feed.avail:
+            if not ingr.feed.avail or ingr.feed.remaining <= 0:
                 return False
         return True
 
@@ -347,7 +394,7 @@ class Recipe(object):
         for ingr in self.ingredients:
             ml = ingr.milliliters
             vol += ml
-            alc_vol += ml * (ingr.feed.proof / 200.0)
+            alc_vol += ml * (ingr.feed.proof / 100.0)
         return 100.0 * alc_vol / vol
 
     def totalVolume(self):
@@ -355,52 +402,231 @@ class Recipe(object):
         for ingr in self.ingredients:
             vol += ingr.milliliters
         return vol
-
+    
+        
     def startDispensing(self, volume):
+        stepsforml=self.stepsforml
         tot_vol = self.totalVolume()
         vol_mult = volume / tot_vol
         self.dispensing = []
-        max_time = max([vol_mult * x.milliliters / x.feed.flowrate for x in self.ingredients])
+        sercommand = ''
+        self.dispenselist = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        logging.info("Dispensing: %s, %d ml" % (self.getName(), volume))
         for ingr in self.ingredients:
-            self.dispensing.append(DispensingIngredient(ingr, vol_mult, max_time))
+            ingr.milliliters = math.ceil(ingr.milliliters * vol_mult)
+            self.dispensing.append(DispensingIngredient(ingr, vol_mult))
         for ingr in self.dispensing:
-            ingr.startFeed()
-        self.last_update_time = time.time()
-        self.last_timeslice = 0
-        self.updateDispensing()
+            thisfeed = SupplyFeed.getByName(ingr.feed.name)
+            newremaining=thisfeed.feeds[ingr.feed.name].remaining - ingr.milliliters
+            thisfeed.feeds[ingr.feed.name].remaining = newremaining
+            logging.debug("remaining neu fuer " + ingr.feed.name + ": " + str(thisfeed.feeds[ingr.feed.name].remaining))
+            logging.info("Zutat " + ingr.feed.name + ": " + str(ingr.milliliters) + " ml")
+            for pumpnumber in list(range(24)):
+                if ingr.feed.motor_num == pumpnumber:
+                    self.dispenselist[pumpnumber] = int(math.ceil(ingr.milliliters * self.stepsforml))
+        sercommand = (','.join(map(str, self.dispenselist))) + '\n'
+        try:
+            self.ser.readData()
+        except:
+            logging.debug("keine bestehende verbindung")
+            try:
+                self.ser = SerialConnection()
+                self.ser.readData()
+                logging.debug ("habe verbindung")
+            except:
+                logging.debug("verbindung nicht moeglich")
+        hwa = HardwareAction(self.mixit)
+        hwa.do_dispensing(self.mixit)
+        self.ser.sendData(sercommand)
+        self.ser.close()
+        del self.ser
+        self.updateDispensing(self.mixit)
+        
 
-    def updateDispensing(self):
-        now = time.time()
-        secs = now - self.last_update_time
-        slice_secs = now - self.last_timeslice
-        self.last_update_time = now
-        if slice_secs > self.timeslice_secs:
-            # Beginning of timeslice.  Start/Restart incomplete feeds.
-            self.last_timeslice = now
+    def updateDispensing(self, mixing=True):
+        ml_left = []
+        dispenselist = self.dispenselist
+        self.ser = SerialConnection()
+        ml_left = self.ser.readLine().split(",")
+        logging.debug(str(ml_left[0]))
+        if not "ok" in ml_left[0]:
             for ingr in self.dispensing:
-                if not ingr.isFlowing() and not ingr.done():
-                    ingr.startFeed()
+                logging.debug(ingr.feed.name)
+                for pumpnumber in list(range(24)):
+                    if ingr.feed.motor_num == pumpnumber:
+                        if "Ready" in ml_left[0]:
+                            ingr.dispensed = 0
+                        else:
+                            logging.debug("pumpnumber ", str(pumpnumber))
+                            if int(ml_left[pumpnumber]) < 0:
+                                ml_left[pumpnumber] = 0
+                            ingr.dispensed = math.ceil( (dispenselist[pumpnumber] - int(ml_left[pumpnumber])) / self.stepsforml)
         else:
-            # Mid-timeslice.  Pause proportional feeds.
-            for ingr in self.dispensing:
-                if not ingr.done() and ingr.isFlowing():
-                    ingr.updateDispensed(secs)
-                    if ingr.done():
-                        if platform.system() != "Linux":
-                            eprint("  Feed #%d dispensed: %goz" % (ingr.feed.motor_num, ingr.dispensed/OZ))
-                        ingr.dispensed += ingr.feed.pulse_overage
-                        ingr.stopFeed()
-                    elif slice_secs > max(self.min_dispense_secs, self.timeslice_secs * ingr.proportion):
-                        ingr.dispensed += ingr.feed.pulse_overage
-                        ingr.stopFeed()
-        self.dispensing[:] = [x for x in self.dispensing if not x.done()]
+            self.ser.close()
+            del self.ser
+            hwa = HardwareAction(self.mixit)
+            hwa.end_dispensing(self.mixit)
+            self.dispensing[:] = [x for x in self.dispensing if not x.done()]
 
     def cancelDispensing(self):
+        self.ser = SerialConnection()
+        self.ser.sendData('@')
+        self.ser.readLine()
+        self.ser.close()
+        del self.ser
+        logging.debug("Ausschenken abgebrochen")
         for ingr in self.dispensing:
-            ingr.dispensed += ingr.feed.pulse_overage
             ingr.stopFeed()
+        self.dispensing[:] = [x for x in self.dispensing if not x.done()]
 
     def doneDispensing(self):
         return not self.dispensing
 
+class HardwareAction():
+    def __init__(self, mixit):
+        logging.debug("initialisiere Hardware")
+        self.hwconfig = hwconfig
+        self.mixit = mixit
+        if mixit == True:
+            logging.debug("mixing is configured")
+        else:
+            logging.debug("no mixing is configured")
+        
+        # setup servos (PCA9685)
+        self.fingerChannel = hwconfig["pca9685"]["fingerchannel"]
+        self.fingerPositions = hwconfig["pca9685"]["fingerpositions"]
+        self.armChannel = hwconfig["pca9685"]["armchannel"]
+        self.armPositions = hwconfig["pca9685"]["armpositions"]
+        self.elevatorChannel = hwconfig["pca9685"]["elevatorchannel"]
+        self.elevatorPositions = hwconfig["pca9685"]["elevatorpositions"]
+        self.mixer = hwconfig["mixer"]["PIN"]
+        self.light = hwconfig["light"]["PIN"]
+        logging.debug("got all hardware parameters")
+        
+        if test_environment == False:
+            logging.debug("no test environment, configure hardwrae")
+            #GPIO.setmode(GPIO.BOARD)
+            logging.debug("set mode tp gpio.board")
+            GPIO.setup(self.mixer, GPIO.OUT)
+            GPIO.setup(self.light, GPIO.OUT)
+            logging.debug("configure Adafruit ServoKit")
+            self.kit = ServoKit(channels=16)
+        logging.debug("end of hardware initialization")
 
+    def getConfig(self):
+        return self.hwconfig
+
+    def light_on(self):
+        logging.debug("turn on light")
+        if test_environment == False:
+            GPIO.output(self.light, False)
+
+    def light_off(self):
+        logging.debug("turn off light")
+        if test_environment == False:
+            GPIO.output(self.light, True)
+
+    def mixer_start(self):
+        logging.debug("start mixer")
+        if test_environment == False:
+            GPIO.setup(self.mixer, False)
+
+    def mixer_stop(self):
+        logging.debug("stop mixer")
+        if test_environment == False:
+            GPIO.setup(self.mixer, True)
+
+    def ping(self, num=3):
+        logging.debug("klingeling")
+        if test_environment == False:
+            self.kit.servo[self.fingerChannel].angle=self.fingerPositions[0]
+            self.kit.servo[self.fingerChannel].angle=self.fingerPositions[2]
+            time.sleep(.25)
+            for i in range(num-1):
+                self.kit.servo[self.fingerChannel].angle=self.fingerPositions[1]
+                time.sleep(.15)
+                self.kit.servo[self.fingerChannel].angle=self.fingerPositions[2]
+                time.sleep(.15)
+            self.kit.servo[self.fingerChannel].angle=self.fingerPositions[0]
+        
+    def arm_dispense(self, dispense=0):
+        if dispense == 0:
+            logging.debug("moving arm to dispense position")
+        else:
+            logging.debug("moving arm to mix position")
+        ch = self.armChannel
+        pos = self.armPositions[1 - dispense]
+        logging.debug("ch %d, pos %d" % (ch, pos))
+        if test_environment == False:
+            #self.kit.set_pwm(ch, 0, pos)
+            self.kit.servo[ch].angle = pos
+
+    def arm_mix(self):
+        self.arm_dispense(dispense=1)
+    
+    def elevator_up(self, up=1):
+        if up == 1:
+            logging.debug("moving elevator to up position")
+        else:
+            logging.debug("moving elevator to down position")
+        ch = self.elevatorChannel
+        pos = self.elevatorPositions[1 - up]
+        logging.debug("ch %d, pos %d" % (ch, pos))
+        if test_environment == False:
+            #self.kit.set_pwm(ch, 0, pos)
+            self.kit.servo[ch].angle = pos
+
+    def elevator_down(self):
+        self.elevator_up(up=0)
+
+    def do_dispensing(self, mixit):
+        self.mixer_stop()
+        self.light_on()
+        time.sleep(.05)
+        self.elevator_up()
+        time.sleep(.3)
+        self.arm_dispense()
+        time.sleep(.3)
+        return True
+
+    def end_dispensing(self, mixit):
+        if mixit == True:
+            logging.debug("mixing is configured")
+        else:
+            logging.debug("no mixing is configured")
+        self.mixer_stop()
+        time.sleep(.1)
+        self.elevator_up()
+        time.sleep(.1)
+        if mixit == True:
+            self.arm_mix()
+            time.sleep(1)
+            self.elevator_down()
+            time.sleep(.50)
+            self.mixer_start()
+            time.sleep(0.3)
+            self.mixer_stop()
+            time.sleep(0.6)
+            self.mixer_start()
+            time.sleep(.30)
+            self.mixer_stop()
+            time.sleep(0.6)
+            self.mixer_start()
+            time.sleep(0.3)
+            self.mixer_stop()
+            time.sleep(.80)
+            self.elevator_up()
+            time.sleep(1)
+            self.arm_dispense()
+            time.sleep(1)
+            self.elevator_down()
+            time.sleep(.5)
+            self.mixer_start()
+            time.sleep(0.3)
+            self.mixer_stop()
+            time.sleep(0.5)
+            self.elevator_up()
+        self.ping()
+        time.sleep(1)
+        self.light_off()
+        return True

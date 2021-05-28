@@ -17,15 +17,17 @@ class RecipeEditScreen(Frame):
         self.master = master
         self.recipe = recipe
         self.newfeed = None
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
         self.renamebtn = RectButton(self, text="Recipe: %s" % recipe.getName(), width=200, justify=LEFT, command=self.handle_button_rename)
         self.retypebtn = RectButton(self, text="Category: %s" % recipe.getType(), width=200, justify=LEFT, command=self.handle_button_retype)
         self.upbtn = RectButton(self, text="\u25b2", state=DISABLED, repeatdelay=500, repeatinterval=100, command=self.handle_button_up)
         self.ingrlb = Listbox(self, width=40, height=5)
         self.dnbtn = RectButton(self, text="\u25bc", state=DISABLED, repeatdelay=500, repeatinterval=100, command=self.handle_button_dn)
-        self.ingradd = RectButton(self, text="\u2795", width=50, command=self.handle_button_ingr_add)
+        self.ingradd = RectButton(self, text="\u002b", width=50, command=self.handle_button_ingr_add)
         self.ingramt = RectButton(self, text="\u270e", width=50, command=self.handle_button_ingr_amt)
-        self.ingrdel = RectButton(self, text="\u2796", width=50, command=self.handle_button_ingr_del)
+        self.ingrdel = RectButton(self, text="\u2212", width=50, command=self.handle_button_ingr_del)
         backbtn = RectButton(self, text="\u23ce", width=120, command=self.handle_button_back)
         self.ingrlb.bind('<<ListboxSelect>>', self.ingredient_listbox_select)
 
@@ -53,10 +55,10 @@ class RecipeEditScreen(Frame):
         self.update_ingr_listbox()
 
     def handle_button_rename(self):
-        self.master.screen_push(AlphaScreen(self.master, label="Name for Recipe:", defval=self.recipe.getName(), callback=self.rename_complete))
+        self.master.screen_push(AlphaScreen(self.master, label="Name für Rezept:", defval=self.recipe.getName(), callback=self.rename_complete))
 
     def handle_button_retype(self):
-        self.master.screen_push(SelectScreen(self.master, Recipe.getPossibleTypeNames(), labeltext="Select the recipe type:", callback=self.retype_complete))
+        self.master.screen_push(SelectScreen(self.master, Recipe.getPossibleTypeNames(), labeltext="Wähle den Rezept-Typ:", callback=self.retype_complete))
 
     def update_scroll_btns(self):
         start, end = self.ingrlb.yview()
@@ -81,11 +83,11 @@ class RecipeEditScreen(Frame):
     def handle_button_ingr_add(self):
         currfeeds = [ingr.feed.name for ingr in self.recipe.ingredients]
         feeds = [feed for feed in SupplyFeed.getNames() if feed not in currfeeds]
-        self.master.screen_push(SelectScreen(self.master, feeds, labeltext="Select the ingredient:", callback=self.add_ingredient_step1))
+        self.master.screen_push(SelectScreen(self.master, feeds, labeltext="Wähle die Zutat:", callback=self.add_ingredient_step1))
 
     def add_ingredient_step1(self, feedname):
         self.newfeed = feedname
-        self.master.screen_push(AmountScreen(self.master, whole=1, unit="ounce", labeltext="Select the amount:", callback=self.add_ingredient_step2))
+        self.master.screen_push(AmountScreen(self.master, whole=1, unit="ounce", labeltext="Wähle die Menge:", callback=self.add_ingredient_step2))
 
     def add_ingredient_step2(self, ml):
         self.recipe.add_ingredient(self.newfeed, ml)
@@ -95,7 +97,7 @@ class RecipeEditScreen(Frame):
         self.master.screen_pop()
 
     def handle_button_ingr_del(self):
-        self.master.screen_push(SelectScreen(self.master, ["Confirm"], labeltext="Are you sure you want to delete that ingredient?", callback=self.del_ingredient_step1))
+        self.master.screen_push(SelectScreen(self.master, ["Bestätigen"], labeltext="Bist Du sicher, dass Du diese Zutat löschen willst?", callback=self.del_ingredient_step1))
 
     def del_ingredient_step1(self, confirm):
         if confirm == "Confirm":
@@ -105,7 +107,7 @@ class RecipeEditScreen(Frame):
 
     def handle_button_ingr_amt(self):
         whole, frac, unit = self.sel_ingr.fractionalBarUnits(metric=self.master.use_metric)
-        self.master.screen_push(AmountScreen(self.master, whole=whole, frac=frac, unit=unit, labeltext="Select the amount:", callback=self.edit_ingredient_step1))
+        self.master.screen_push(AmountScreen(self.master, whole=whole, frac=frac, unit=unit, labeltext="Wähle die Menge:", callback=self.edit_ingredient_step1))
 
     def edit_ingredient_step1(self, amt):
         self.sel_ingr.milliliters = amt
@@ -131,13 +133,13 @@ class RecipeEditScreen(Frame):
 
     def rename_complete(self, val):
         self.recipe.rename(val)
-        self.renamebtn.config(text="Recipe: %s" % self.recipe.getName())
+        self.renamebtn.config(text="Rezept: %s" % self.recipe.getName())
         self.master.save_configs()
         self.master.screen_pop()
 
     def retype_complete(self, val):
         self.recipe.retype(val)
-        self.retypebtn.config(text="Category: %s" % self.recipe.getType())
+        self.retypebtn.config(text="Kategorie: %s" % self.recipe.getType())
         self.master.save_configs()
         self.master.screen_pop()
 

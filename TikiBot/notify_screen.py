@@ -10,6 +10,8 @@ class NotifyScreen(Frame):
     def __init__(self, master, text=""):
         super(NotifyScreen, self).__init__(master)
         self.master = master
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
         lbl = Label(self, text=text, font="Helvetica 24")
         backbtn = RectButton(self, text="\u23ce", width=120, command=self.handle_button_back)
         lbl.grid(column=1, row=1, sticky=E+W)

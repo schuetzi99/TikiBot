@@ -1,109 +1,309 @@
 conf_version: 1.0.0
 feeds:
-- Meyer's Dark Rum: {available: true, flowrate: 12.5, overage: 0.04, proof: 80, type: Rums}
-- Appleton's Gold Rum: {available: true, flowrate: 12.5, overage: 0.04, proof: 80,
-    type: Rums}
-- Meyer's Silver Rum: {available: true, flowrate: 12.5, overage: 0.04, proof: 80,
-    type: Rums}
-- Lemonheart 151 Rum: {available: true, flowrate: 12.5, overage: 0.04, proof: 151,
-    type: Rums}
-- Lime Juice: {available: true, flowrate: 12.7, overage: 0.04, proof: 0, type: Juices}
-- Lemon Juice: {available: true, flowrate: 12.8, overage: 0.04, proof: 0, type: Juices}
-- Orange Juice: {available: true, flowrate: 12.8, overage: 0.04, proof: 0, type: Juices}
-- Pineapple Juice: {available: true, flowrate: 12.8, overage: 0.04, proof: 0, type: Juices}
-- Passion Fruit Syrup: {available: true, flowrate: 12.2, overage: 0.04, proof: 0,
-    type: Flavorings}
-- Sugar Syrup: {available: true, flowrate: 2.7, overage: 0.02, proof: 0, type: Flavorings}
-- Angostura Bitters: {available: true, flowrate: 4.1, overage: 0.2, proof: 0, type: Flavorings}
-- Grenadine: {available: true, flowrate: 13.1, overage: 0.03, proof: 0, type: Flavorings}
+- Amaretto: {available: true, remaining: 700, overage: 0.04, proof: 28, type: Rums}
+- Ananassaft: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Apfelsaft: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Bacardi: {available: true, remaining: 700, overage: 0.04, proof: 38, type: Rums}
+- Baileys: {available: true, remaining: 500, overage: 0.04, proof: 17, type: Rums}
+- Bananennektar: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Cranberrysaft: {available: true, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Curacao: {available: true, remaining: 700, overage: 0.04, proof: 21, type: Rums}
+- Gin: {available: true, remaining: 700, overage: 0.04, proof: 38, type: Rums}
+- Grenadine: {available: true, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Kokossirup: {available: true, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Kirschsaft: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Likör 43: {available: true, remaining: 700, overage: 0.04, proof: 31, type: Rums}
+- Malibu: {available: true, remaining: 700, overage: 0.04, proof: 21, type: Rums}
+- Maracujasaft: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Milch: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Orangenlikör: {available: true, remaining: 700, overage: 0.04, proof: 51, type: Rums}
+- Orangensaft: {available: true, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Sahne: {available: true, remaining: 500, overage: 0.04, proof: 0, type: Flavorings}
+- Kirschlikör: {available: true, remaining: 500, overage: 0.04, proof: 20, type: Rums}
+- Schokosirup: {available: true, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Wodka: {available: true, remaining: 700, overage: 0.04, proof: 38, type: Rums}
+- Zitronensaft: {available: true, remaining: 500, overage: 0.04, proof: 0, type: Juices}
+- Zuckersirup: {available: true, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Pfirsichsaft: {available: false, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Pfirsichlikör: {available: false, remaining: 700, overage: 0.04, proof: 21, type: Rums}
+- Campari: {available: false, remaining: 700, overage: 0.04, proof: 25, type: Rums}
+- Mangosaft: {available: false, remaining: 1000, overage: 0.04, proof: 0, type: Juices}
+- Tequila: {available: false, remaining: 700, overage: 0.04, proof: 38, type: Rums}
+- Curacao Sirup: {available: false, remaining: 700, overage: 0.04, proof: 0, type: Flavorings}
+- Cachaca: {available: false, remaining: 700, overage: 0.04, proof: 38, type: Rums}
+- Cola: {available: false, remaining: 1500, overage: 0.04, proof: 0, type: Juices}
+- Ginger Ale: {available: false, remaining: 1500, overage: 0.04, proof: 0, type: Juices}
+- Tonic Water: {available: false, remaining: 1500, overage: 0.04, proof: 0, type: Juices}
+- Zitronenlimonade: {available: false, remaining: 1500, overage: 0.04, proof: 0, type: Juices}
+
 passcode: '8888'
 recipes:
-  Beachcomber's Gold:
+  43 Milch:
     ingredients:
-    - [Meyer's Silver Rum, 1.0, oz]
-    - [Appleton's Gold Rum, 0.5, oz]
-    - [Lime Juice, 0.333, oz]
-    - [Passion Fruit Syrup, 0.75, oz]
-    - [Sugar Syrup, 0.5, oz]
-    - [Angostura Bitters, 1.0, dash]
-    type: Tiki Drinks
-  Chief Lapu Lapu:
+    - [Likör 43, 40, ml]
+    - [Milch, 80, ml]
+    type: Longdrinks
+    mixit: true
+  43 Sunset:
     ingredients:
-    - [Orange Juice, 3.0, oz]
-    - [Lemon Juice, 2.0, oz]
-    - [Sugar Syrup, 1.0, oz]
-    - [Passion Fruit Syrup, 1.0, oz]
-    - [Meyer's Dark Rum, 1.5, oz]
-    - [Meyer's Silver Rum, 1.5, oz]
-    type: Tiki Drinks
-  Hurricane:
+    - [Maracujasaft, 40, ml]
+    - [Ananassaft, 20, ml]
+    - [Likör 43, 15, ml]
+    - [Malibu, 10, ml]
+    - [Wodka, 10, ml]
+    type: Fancy Drinks
+    mixit: true
+  43 Sour:
     ingredients:
-    - [Lemon Juice, 2.0, oz]
-    - [Passion Fruit Syrup, 2.0, oz]
-    - [Meyer's Dark Rum, 4.0, oz]
-    type: Tiki Drinks
-  Orange Juice:
+    - [Likör 43, 50, ml]
+    - [Zuckersirup, 10, ml]
+    - [Orangensaft, 80, ml]
+    - [Zitronensaft, 20, ml]
+    type: Sour
+    mixit: true
+  Abendsonne:
     ingredients:
-    - [Orange Juice, 6.0, oz]
-    type: Juices
-  Pineapple Juice:
+    - [Sahne, 40, ml]
+    - [Grenadine, 10, ml]
+    - [Bananennektar, 20, ml]
+    type: Alkoholfrei
+    mixit: true
+  Bacardi Cocktail:
     ingredients:
-    - [Pineapple Juice, 6.0, oz]
-    type: Juices
-  Pineapple Orange Juice:
+    - [Bacardi, 40, ml]
+    - [Zitronensaft, 20, ml]
+    - [Grenadine, 5, ml]
+    - [Zuckersirup, 5, ml]
+    type: Cocktails
+    mixit: true
+  Baileys Colada:
     ingredients:
-    - [Orange Juice, 3.0, oz]
-    - [Pineapple Juice, 3.0, oz]
-    type: Juices
-  Planter's Punch:
+    - [Baileys, 60, ml]
+    - [Sahne, 30, ml]
+    - [Kokossirup, 30, ml]
+    - [Ananassaft, 120, ml]
+    type: Coladas
+    mixit: true
+  Baileys Tropic:
     ingredients:
-    - [Lime Juice, 0.75, oz]
-    - [Sugar Syrup, 1.0, oz]
-    - [Meyer's Dark Rum, 3.0, oz]
-    - [Angostura Bitters, 2.0, dash]
-    type: Tiki Drinks
-  Shrunken Skull:
+    - [Baileys, 40, ml]
+    - [Curacao, 20, ml]
+    - [Bacardi, 20, ml]
+    - [Ananassaft, 60, ml]
+    type: Tropical Drinks
+    mixit: true
+  Amaretto:
     ingredients:
-    - [Lime Juice, 1.0, oz]
-    - [Grenadine, 1.0, oz]
-    - [Appleton's Gold Rum, 1.0, oz]
-    - [Meyer's Dark Rum, 1.0, oz]
-    type: Tiki Drinks
-  Tiger Shark:
+    - [Amaretto, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Ananassaft:
     ingredients:
-    - [Appleton's Gold Rum, 0.5, oz]
-    - [Meyer's Silver Rum, 0.5, oz]
-    - [Lemonheart 151 Rum, 0.5, oz]
-    - [Lime Juice, 0.5, oz]
-    - [Pineapple Juice, 0.5, oz]
-    - [Sugar Syrup, 0.5, oz]
-    type: Tiki Drinks
-  Trader Vic Grog:
+    - [Ananassaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Apfelsaft:
     ingredients:
-    - [Lemon Juice, 1.0, oz]
-    - [Pineapple Juice, 1.0, oz]
-    - [Passion Fruit Syrup, 1.0, oz]
-    - [Meyer's Dark Rum, 2.0, oz]
-    - [Angostura Bitters, 1.0, dash]
-    type: Tiki Drinks
-  Tropical Punch:
+    - [Apfelsaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Bacardi:
     ingredients:
-    - [Orange Juice, 3.0, oz]
-    - [Lime Juice, 1.0, oz]
-    - [Pineapple Juice, 1.0, oz]
-    - [Grenadine, 0.5, oz]
-    type: Juices
-  Zombie:
+    - [Bacardi, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Baileys:
     ingredients:
-    - [Lime Juice, 1.0, oz]
-    - [Lemon Juice, 1.0, oz]
-    - [Pineapple Juice, 1.0, oz]
-    - [Passion Fruit Syrup, 1.0, oz]
-    - [Meyer's Silver Rum, 1.0, oz]
-    - [Appleton's Gold Rum, 1.0, oz]
-    - [Lemonheart 151 Rum, 1.0, oz]
-    - [Sugar Syrup, 1.0, tsp]
-    - [Angostura Bitters, 1.0, dash]
-    type: Tiki Drinks
-type_icons: {Cocktails: CocktailsIcon.gif, Juices: JuicesIcon.gif, Tiki Drinks: TikiDrinkIcon.gif}
-use_metric: false
+    - [Baileys, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Bananennektar:
+    ingredients:
+    - [Bananennektar, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Cranberrysaft:
+    ingredients:
+    - [Cranberrysaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Curacao:
+    ingredients:
+    - [Curacao, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Gin:
+    ingredients:
+    - [Gin, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Grenadine:
+    ingredients:
+    - [Grenadine, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Kokossirup:
+    ingredients:
+    - [Kokossirup, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Kirschsaft:
+    ingredients:
+    - [Kirschsaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Likör 43:
+    ingredients:
+    - [Likör 43, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Malibu:
+    ingredients:
+    - [Malibu, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Maracujasaft:
+    ingredients:
+    - [Maracujasaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Orangenlikör:
+    ingredients:
+    - [Orangenlikör, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Orangensaft:
+    ingredients:
+    - [Orangensaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Pfirsichlikör:
+    ingredients:
+    - [Pfirsichlikör, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Sahne:
+    ingredients:
+    - [Sahne, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Wodka:
+    ingredients:
+    - [Wodka, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Zitronensaft:
+    ingredients:
+    - [Zitronensaft, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Zuckersirup:
+    ingredients:
+    - [Zuckersirup, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Pfirsichsaft:
+    ingredients:
+    - [Pfirsichsaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Campari:
+    ingredients:
+    - [Campari, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Mangosaft:
+    ingredients:
+    - [Mangosaft, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Tequila:
+    ingredients:
+    - [Tequila, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Curacao Sirup:
+    ingredients:
+    - [Curacao Sirup, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Cachaca:
+    ingredients:
+    - [Cachaca, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Cola:
+    ingredients:
+    - [Cola, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Ginger Ale:
+    ingredients:
+    - [Ginger Ale, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Tonic Water:
+    ingredients:
+    - [Tonic Water, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Milch:
+    ingredients:
+    - [Milch, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Kirschlikör:
+    ingredients:
+    - [Kirschlikör, 20, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Schokosirup:
+    ingredients:
+    - [Schokosirup, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+  Zitronenlimonade:
+    ingredients:
+    - [Zitronenlimonade, 40, ml]
+    type: Extra Schuss
+    mixit: false
+
+type_icons: {Cocktails: Cocktails2Icon.gif, Alkoholfrei: AlkoholfreiDrinkIcon.gif, Longdrinks: LongDrinkIcon.gif, Fancy Drinks: FancyDrinkIcon.gif, Tropical Drinks: TropicalDrinkIcon.gif, Sour: SourDrtinkIcon.gif, Coladas: ColadaDrinkIcon.gif, Extra Schuss: ExtraSchussIcon.gif}
+use_metric: true
+stepsforml: '113'
+serdevice: '/dev/ttyUSB0'
+bgcolor: "#94F92F"

@@ -2,6 +2,7 @@ import sys
 import time
 import platform
 import operator
+import os
 
 from Adafruit_MotorHAT import Adafruit_MotorHAT as AFMH
 from Adafruit_GPIO.I2C import get_i2c_device
@@ -22,13 +23,13 @@ class SupplyFeed(object):
     feeds = {}
     feed_types = {}
 
-    def __init__(self, type_, name, flowrate=14.2, overage=0.25, proof=0, avail=True):
+    def __init__(self, type_, name, remaining=720, overage=0.25, proof=0, avail=True):
         if type_ not in SupplyFeed.feed_types:
             SupplyFeed.feed_types[type_] = []
         SupplyFeed.feed_types[type_].append(self)
         self.type_ = type_
         self.name = name
-        self.flowrate = flowrate
+        self.remaining = remaining
         self.pulse_overage = overage
         self.proof = proof
         self.flowing = False
@@ -49,9 +50,9 @@ class SupplyFeed(object):
         for feeddict in d['feeds']:
             for name, data in feeddict.items():
                 cls(
-                    data.get('type', 'Juices'),
+                    data.get('type', 'Alkoholfrei'),
                     name,
-                    flowrate=data.get('flowrate', 14.2),
+                    remaining=data.get('remaining', 730),
                     overage=data.get('overage', 0.25),
                     proof=data.get('proof', 0),
                     avail=data.get('available', True)
@@ -70,7 +71,7 @@ class SupplyFeed(object):
         return {
             self.name: {
                 'type': self.type_,
-                'flowrate': self.flowrate,
+                'remaining': self.remaining,
                 'overage': self.pulse_overage,
                 'proof': self.proof,
                 'available': self.avail,
@@ -84,9 +85,6 @@ class SupplyFeed(object):
         num = motor_num % 4
         if addr not in cls.motor_controllers:
             busnum = 0
-            if platform.system() == "Linux":
-                if "udooneo" in platform.release():
-                    busnum = 1
             cls.motor_controllers[addr] = AFMH(addr, i2c_bus=busnum)
         if motor_num not in cls.dc_motors:
             cls.dc_motors[motor_num] = cls.motor_controllers[addr].getMotor(num + 1)
@@ -115,6 +113,43 @@ class SupplyFeed(object):
             yield cls.feeds[key]
 
     @classmethod
+    def getAvailable(cls):
+        """Returns a list of all available SupplyFeeds, sorted by name."""
+        for key in sorted(cls.feeds.keys()):
+            if cls.feeds[key].avail == True:
+                yield cls.feeds[key]
+
+    
+    @classmethod
+    def getAvailableNotEmpty(cls):
+        """Returns a list of all available SupplyFeeds, not empty, sorted by name."""
+        for key in sorted(cls.feeds.keys()):
+            if cls.feeds[key].avail == True:
+                if cls.feeds[key].remaining > 0:
+                    yield cls.feeds[key]
+
+    @classmethod
+    def getAvailableEmpty(cls):
+        """Returns a list of all available SupplyFeeds, empty, sorted by name."""
+        for key in sorted(cls.feeds.keys()):
+            if cls.feeds[key].avail == True:
+                if cls.feeds[key].remaining <= 0:
+                    yield cls.feeds[key]
+
+    @classmethod
+    def areFeedsEmpty(cls):
+        color = "green"
+        """Returns if there is a empty feed."""
+        for key in sorted(cls.feeds.keys()):
+            if cls.feeds[key].avail == True:
+                if cls.feeds[key].remaining <= 0:
+                    return "red"
+                elif cls.feeds[key].remaining <= 50:
+                    color = "orange"
+        return color
+
+
+    @classmethod
     def getAllOrdered(cls):
         """Returns a list of all SupplyFeeds, sorted by feed number."""
         return cls.feed_order
@@ -127,6 +162,10 @@ class SupplyFeed(object):
     def getName(self):
         """Get the name of this SupplyFeed instance."""
         return self.name
+    
+    def getRemaining(self):
+        """Get the remaining of this SupplyFeed instance."""
+        return self.remaining
 
     def isFlowing(self):
         """Returns true if this SupplyFeed if currently on/flowing."""
@@ -134,26 +173,12 @@ class SupplyFeed(object):
 
     def startFeed(self):
         """Turn on this SupplyFeed, to start it flowing."""
-        if platform.system() == "Linux":
-            # turn on solonoid/motor for feed
-            if self.motor is None:
-                self.motor = SupplyFeed._getMotorByNumber(self.motor_num)
-            self.motor.setSpeed(255)
-            self.motor.run(AFMH.FORWARD)
-        else:
-            eprint("Starting feed %d @%f" % (self.motor_num, time.time() - progstart_time))
+        eprint("Starting feed %d @%f" % (self.motor_num, time.time() - progstart_time))
         self.flowing = True
 
     def stopFeed(self):
         """Turn off this SupplyFeed, to stop it's flow."""
-        if platform.system() == "Linux":
-            # turn off solonoid/motor for feed
-            if self.motor is None:
-                self.motor = SupplyFeed._getMotorByNumber(self.motor_num)
-            self.motor.setSpeed(0)
-            self.motor.run(AFMH.RELEASE)
-        else:
-            eprint("STOPPING feed %d @%f" % (self.motor_num, time.time() - progstart_time))
+        eprint("STOPPING feed %d @%f" % (self.motor_num, time.time() - progstart_time))
         self.flowing = False
 
     def delete_feed(self):

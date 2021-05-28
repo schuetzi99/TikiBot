@@ -7,12 +7,14 @@ from rectbutton import RectButton
 
 
 class LockScreen(Frame):
-    def __init__(self, master, succ_screen=None, labeltext="Enter Passcode:", set_pass=None):
+    def __init__(self, master, succ_screen=None, labeltext="Passwort eingeben:", set_pass=None):
         self.entered_code = ""
         self.success_screen = succ_screen
         self.labeltext = labeltext
         self.set_pass = set_pass
         super(LockScreen, self).__init__(master)
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
         self.lbl = Label(self, text=self.labeltext, font="Helvetica 24")
         numbtns = {}

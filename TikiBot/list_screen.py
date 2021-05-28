@@ -5,6 +5,10 @@ except ImportError:  # Python 3
 
 from rectbutton import RectButton
 from select_screen import SelectScreen
+from touch_checkbox import TouchCheckbox
+from touch_spinner import TouchSpinner
+from exportpdf import ExportPdf
+import logging
 
 
 class ListScreen(Frame):
@@ -18,21 +22,30 @@ class ListScreen(Frame):
             edit_cb=None,
             raise_cb=None,
             lower_cb=None,
-            add_lbl="\u2795",
-            del_lbl="\u2796",
+            #en_ckb=None,
+            rem_sp=None,
+            ep_cb=None,
+            add_lbl="\u002b",
+            del_lbl="\u2212",
             edit_lbl="\u270e",
             raise_lbl="\u2b06",
             lower_lbl="\u2b07",
+            ep_lbl="Export PDF",
             extra_btns=None
         ):
         super(ListScreen, self).__init__(master)
         self.master = master
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
         self.items_cb = items_cb
         self.add_cb = add_cb
         self.del_cb = del_cb
         self.edit_cb = edit_cb
         self.raise_cb = raise_cb
         self.lower_cb = lower_cb
+        self.rem_sp = rem_sp
+        self.ep_cb = ep_cb
+        self.sel_rem = 700
         self.extra_btns = []
         self.items = []
 
@@ -52,12 +65,17 @@ class ListScreen(Frame):
             self.raisebtn = RectButton(self, text=raise_lbl, width=btnwidth, command=self.handle_button_raise)
         if self.lower_cb:
             self.lowerbtn = RectButton(self, text=lower_lbl, width=btnwidth, command=self.handle_button_lower)
+        if self.rem_sp:
+            self.remainspin = TouchSpinner(self, width=150, value=self.sel_rem, minval=-50, maxval=5000, incdecval=50, format="Restinhalt: %d", changecmd=self.handle_remaining_change)
+        if self.ep_cb:
+            self.epbtn = RectButton(self, text=ep_lbl, width=btnwidth, command=self.handle_button_ep)
+        
+
         if extra_btns:
             self.extra_btns = []
             for d in extra_btns:
                 txt = d['name']
                 cb = d['callback']
-                en = d.get('enable_cb', None)
                 btn = RectButton(self, text=txt, width=btnwidth, command=lambda x=cb: self.handle_button_extra(x))
                 btn.en_cb = en
                 self.extra_btns.append(btn)
@@ -79,8 +97,15 @@ class ListScreen(Frame):
             self.raisebtn.grid(column=3, row=7, pady=5, sticky=N+W)
         if self.lower_cb:
             self.lowerbtn.grid(column=3, row=8, pady=5, sticky=N+W)
+        if self.rem_sp:
+            self.remainspin.grid(column=3, row=13, rowspan=3, padx=20, pady=10)
+        if self.ep_cb:
+            self.epbtn.grid(column=3, row=16, pady=5, sticky=N+W)
+        
+        
+        
         for n, btn in enumerate(self.extra_btns):
-            btn.grid(column=3, row=10+n, pady=5, sticky=N+W)
+            btn.grid(column=3, row=15+n, pady=5, sticky=N+W)
         backbtn.grid(column=3, row=98, sticky=S+E)
 
         self.columnconfigure(0, minsize=10)
@@ -130,6 +155,7 @@ class ListScreen(Frame):
         self.sel_idx = None
         self.sel_txt = None
         self.sel_dat = None
+        self.sel_rem = None
         selidx = self.lbox.curselection()
         if selidx:
             selidx = selidx[0]
@@ -154,6 +180,10 @@ class ListScreen(Frame):
             self.raisebtn.config(state=NORMAL if selidx is not None and selidx>0 else DISABLED)
         if self.lower_cb:
             self.lowerbtn.config(state=NORMAL if selidx is not None and selidx<endidx else DISABLED)
+        if self.rem_sp:
+            self.remainspin.config(state=NORMAL if selidx is not None else DISABLED)
+        if self.ep_cb:
+            self.epbtn.config(state=NORMAL if selidx is not None else DISABLED)
         for btn in self.extra_btns:
             btn.config(state=NORMAL if btn.en_cb(selidx) else DISABLED)
 
@@ -213,5 +243,15 @@ class ListScreen(Frame):
     def handle_button_back(self):
         self.master.screen_pop()
 
+    def handle_remaining_change(self, oldval, newval):
+        self.sel_dat.remaining = newval
+        self.update_listbox()
+        self.update_button_states()
+        self.master.save_configs()
+        logging.info("Zutat " + self.sel_dat.name + " aufgefüllt auf: " + str(newval) + " ml")
+
+    def handle_button_ep(self):
+        #cur_export = ExportPdf()
+        ExportPdf.exportpdf(self)
 
 

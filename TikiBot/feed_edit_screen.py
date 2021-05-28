@@ -18,19 +18,23 @@ class FeedEditScreen(Frame):
         self.feed = feed
         self.avail = IntVar()
         self.avail.set(1 if feed.avail else 0)
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
-        self.lbl = Label(self, text="Feed #%d: %s" % (feed.motor_num, feed.getName()))
-        renamebtn = RectButton(self, text="Rename Feed", width=150, command=self.handle_button_rename)
+        self.lbl = Label(self, text="Zutat #%d: %s" % (feed.motor_num, feed.getName()))
+        renamebtn = RectButton(self, text="Zutat umbenennen", width=150, command=self.handle_button_rename)
         calibbtn = RectButton(self, text="Calibration", width=150, command=self.handle_button_calib)
         self.feedbtn = RectButton(self, text="Start Feed", width=150, command=self.handle_button_feed)
         enbtn = TouchCheckbox(self, text="Available", variable=self.avail, command=self.handle_button_enable)
-        self.proofspin = TouchSpinner(self, width=150, value=self.feed.proof, minval=0, maxval=200, incdecval=1, format="Proof: %d", changecmd=self.handle_proof_change)
+        self.proofspin = TouchSpinner(self, width=150, value=self.feed.proof, minval=0, maxval=100, incdecval=1, format="Alkohol: %d", changecmd=self.handle_proof_change)
+        self.remainingspin = TouchSpinner(self, width=150, value=self.feed.remaining, minval=0, maxval=5000, incdecval=50, format="Restinhalt: %d", changecmd=self.handle_remaining_change)
         backbtn = RectButton(self, text="\u23ce", width=120, command=self.handle_button_back)
 
         self.lbl.grid(column=1, row=1, columnspan=2, pady=20, sticky=E+W)
         renamebtn.grid(column=1, row=2, padx=20, pady=10, sticky=E+W)
-        calibbtn.grid(column=1, row=3, padx=20, pady=10, sticky=E+W)
-        self.feedbtn.grid(column=1, row=4, padx=20, pady=10, sticky=E+W)
+        #calibbtn.grid(column=1, row=3, padx=20, pady=10, sticky=E+W)
+        #self.feedbtn.grid(column=1, row=4, padx=20, pady=10, sticky=E+W)
+        self.remainingspin.grid(column=1, row=3, rowspan=3, padx=20, pady=10)
         enbtn.grid(column=2, row=2, padx=20, pady=10, sticky=E+W)
         self.proofspin.grid(column=2, row=3, rowspan=3, padx=20, pady=10)
         backbtn.grid(column=2, row=9, columnspan=3, padx=20, pady=10, sticky=S+E)
@@ -43,6 +47,9 @@ class FeedEditScreen(Frame):
 
     def handle_proof_change(self, oldval, newval):
         self.feed.proof = newval
+
+    def handle_remaining_change(self, oldval, newval):
+        self.feed.remaining = newval
 
     def handle_button_enable(self, ev=None):
         self.feed.avail = True if self.avail.get() != 0 else False

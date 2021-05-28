@@ -24,6 +24,8 @@ class ShutdownScreen(Frame):
         self.rowconfigure(0, minsize=10)
         self.rowconfigure(8, weight=1)
         self.rowconfigure(9, minsize=10)
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
     def handle_button_quit(self):
         sys.exit(0)

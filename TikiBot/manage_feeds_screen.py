@@ -19,13 +19,16 @@ class ManageFeedsScreen(ListScreen):
         super(ManageFeedsScreen, self).__init__(
             master,
             self._get_items,
-            label_text="Select a feed to manage:",
+            label_text="Zutat zum bearbeiten auswählen:",
             add_cb=self.item_add,
             del_cb=self.item_del,
             edit_cb=self.item_edit,
             raise_cb=self.item_raise,
             lower_cb=self.item_lower,
         )
+        self.bgcolor = master.bgcolor,
+        self.configure(bg=self.bgcolor),
+        
 
     def _get_items(self):
         return [
@@ -47,15 +50,15 @@ class ManageFeedsScreen(ListScreen):
                 SupplyFeed.getByName(name)
         except KeyError:
             pass
-        self.master.screen_push(AlphaScreen(self.master, label="Name for New Feed:", defval=name, callback=self._item_add_finish))
+        self.master.screen_push(AlphaScreen(self.master, label="Name für neue Zutat:", defval=name, callback=self._item_add_finish))
 
     def _item_add_finish(self, name):
-        flowrate = 14.2
+        remaining = 750
         overage = 0.25
         for lastfeed in SupplyFeed.getAllOrdered():
-            flowrate = lastfeed.flowrate
+            remaining = lastfeed.remaining
             overage = lastfeed.pulse_overage
-        feed = SupplyFeed("Misc", name, flowrate=flowrate, overage=overage)
+        feed = SupplyFeed("Misc", name, remaining=remaining, overage=overage)
         self.master.save_configs()
         self.update_listbox()
         self.master.screen_pop()
@@ -65,9 +68,9 @@ class ManageFeedsScreen(ListScreen):
         self.sel_feed = feed
         recipes = Recipe.getRecipesByFeed(feed)
         if recipes:
-            self.master.screen_push(NotifyScreen(self.master, text="That feed is currently in use by one or more recipes."))
+            self.master.screen_push(NotifyScreen(self.master, text="Diese Zutat wird gerade durch eines oder mehrtere Rezepte verwendet."))
         else:
-            self.master.screen_push(SelectScreen(self.master, ["Confirm"], labeltext='Delete feed "%s"?' % txt, callback=self._item_del_finish))
+            self.master.screen_push(SelectScreen(self.master, ["Confirm"], labeltext='Lösche Zutat "%s"?' % txt, callback=self._item_del_finish))
 
     def _item_del_finish(self, confirm):
         if confirm == "Confirm":

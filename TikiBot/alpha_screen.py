@@ -13,6 +13,8 @@ class AlphaScreen(Frame):
         self.curr_kbfr = None
         self.kbframes = []
         super(AlphaScreen, self).__init__(master, class_="Alpha")
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
         if self.label_txt:
             self.lbl = Label(self, text=self.label_txt, font="Helvetica 24")
@@ -27,15 +29,15 @@ class AlphaScreen(Frame):
 
         keyboards = [
             [
-                ["q", "u", "e", "r", "t", "y", "u", "i", "o", "p"],
-                ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
-                ["ABC", "z", "x", "c", "v", "b", "n", "m", "\u232b"],
+                ["q", "u", "e", "r", "t", "z", "u", "i", "o", "p", "ü"],
+                ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ö", "ä"],
+                ["ABC", "y", "x", "c", "v", "b", "n", "m", "ß", "\u232b"],
                 ["123", "\u2190", "\u2192", "Space", "Cancel", "Enter"]
             ],
             [
-                ["Q", "U", "E", "R", "T", "Y", "U", "I", "O", "P"],
-                ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-                ["abc", "Z", "X", "C", "V", "B", "N", "M", "\u232b"],
+                ["Q", "U", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"],
+                ["abc", "Y", "X", "C", "V", "B", "N", "M", "\u232b"],
                 ["123", "\u2190", "\u2192", "Space", "Cancel", "Enter"]
             ],
             [

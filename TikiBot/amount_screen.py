@@ -9,12 +9,14 @@ from recipes import unit_measures
 
 
 class AmountScreen(Frame):
-    def __init__(self, master, labeltext="Select an amount:", seltext="Select", whole=1, frac="", unit="ounce", callback=None):
+    def __init__(self, master, labeltext="Wähle die Menge:", seltext="Select", whole=1, frac="", unit="ounce", callback=None):
         super(AmountScreen, self).__init__(master, class_="Amount")
         self.master = master
         self.callback = callback
         fracvals = ["", "1/8", "1/4", "1/3", "3/8", "1/2", "5/8", "2/3", "3/4", "7/8"]
         unitvals = ["dash", "ml", "tsp", "tbsp", "ounce", "cup"]
+        self.bgcolor = master.bgcolor
+        self.configure(bg=self.bgcolor)
 
         lbl = Label(self, text=labeltext)
         self.wholespin = TouchSpinner(self, width=40, value=whole, minval=0, maxval=99, incdecval=1, justify=RIGHT)
